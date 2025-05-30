@@ -1,0 +1,49 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+ENV/
+.env
+pip-log.txt
+pip-delete-this-directory.txt
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.log
+.mypy_cache/
+.dmypy.json
+dmypy.json
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Flask
+instance/
+.webassets-cache/
+migrations/
+
+# IDEs e arquivos de sistema
+.vscode/
+.idea/
+*.DS_Store
+Thumbs.db
+
+# Arquivos de dependência (se você usar um gerenciador de pacotes e quiser registrar apenas o arquivo de requisitos)
+# É altamente recomendável NÃO versionar o ambiente virtual diretamente.
+# Em vez disso, crie um arquivo requirements.txt com suas dependências: pip freeze > requirements.txt
+# E adicione requirements.txt ao Git.
+
+# Outros arquivos que você não queira versionar
+# ex: local_settings.py
+# ex: *.sqlite3 (se você tiver bancos de dados SQLite locais de teste/desenvolvimento)
+# ex: *.db
+# ex: .DS_Store (para usuários macOS)

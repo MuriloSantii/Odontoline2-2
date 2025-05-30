@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OdontoLine - Gerenciamento de Fila</title>
+    <style>
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        margin: 0;
+        padding: 20px;
+        background-color: #eef2f7;
+        color: #333;
+        line-height: 1.6;
+      }
+      .container {
+        max-width: 900px;
+        margin: 20px auto;
+        background-color: #fff;
+        padding: 25px 30px;
+        border-radius: 12px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+      }
+      .header {
+        text-align: center;
+        margin-bottom: 30px;
+        padding-bottom: 20px;
+        border-bottom: 1px solid #dee2e6;
+      }
+      .logo {
+        max-width: 180px; /* Ajuste conforme necessário */
+        height: auto;
+        margin-bottom: 10px;
+      }
+      h1.main-title {
+        /* Classe específica para o título principal */
+        color: #0056b3;
+        margin-bottom: 5px;
+        font-size: 2.2em;
+      }
+      h1, /* Para o H1 do cadastro */
+      h2 {
+        color: #007bff;
+        text-align: left; /* Alinha H2 à esquerda */
+        margin-top: 30px;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #007bff30;
+        font-size: 1.6em;
+      }
+      h1 {
+        /* Estilo para o H1 do formulário de cadastro */
+        text-align: left;
+        font-size: 1.6em; /* Mesmo tamanho do H2 para consistência de seção */
+      }
+      .form-group {
+        margin-bottom: 18px;
+      }
+      label {
+        display: block;
+        margin-bottom: 6px;
+        font-weight: 600;
+        color: #495057;
+      }
+      select,
+      input[type="text"],
+      button {
+        width: 100%;
+        padding: 12px;
+        box-sizing: border-box;
+        border: 1px solid #ced4da;
+        border-radius: 6px;
+        font-size: 1em;
+      }
+      input[type="text"]:focus,
+      select:focus {
+        border-color: #007bff;
+        box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+        outline: none;
+      }
+      button {
+        background: #007bff;
+        color: white;
+        border: none;
+        padding: 12px 20px;
+        cursor: pointer;
+        font-size: 1.05em;
+        font-weight: bold;
+        transition: background-color 0.2s ease-in-out, transform 0.1s ease;
+      }
+      button:hover {
+        background: #0056b3;
+        transform: translateY(-1px);
+      }
+      button:active {
+        transform: translateY(0px);
+      }
+      .status-message {
+        /* Classe unificada para mensagens de status */
+        margin-top: 20px;
+        padding: 12px;
+        border-radius: 6px;
+        text-align: center;
+        font-weight: bold;
+        display: none; /* Escondido por padrão */
+      }
+      .status-message.show {
+        display: block; /* Mostra quando a classe 'show' é adicionada */
+      }
+      .success {
+        background: #d1e7dd;
+        color: #0f5132;
+        border: 1px solid #badbcc;
+      }
+      .error {
+        background: #f8d7da;
+        color: #842029;
+        border: 1px solid #f5c2c7;
+      }
+      .info {
+        background: #cff4fc;
+        color: #055160;
+        border: 1px solid #b6effb;
+      }
+
+      #queue-display-container {
+        margin-top: 30px;
+      }
+      .queue-display-area {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 20px;
+        padding: 10px 0;
+      }
+      .queue-section {
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        padding: 15px;
+        border-radius: 8px;
+      }
+      .queue-section h3 {
+        margin-top: 0;
+        margin-bottom: 12px;
+        color: #0056b3;
+        font-size: 1.2em;
+        border-bottom: 1px solid #ced4da;
+        padding-bottom: 8px;
+      }
+      .patient-item {
+        background-color: #fff;
+        border: 1px solid #e0e0e0;
+        padding: 10px 15px;
+        margin-bottom: 8px;
+        border-radius: 6px;
+        font-size: 0.95em;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        display: flex; /* Para alinhar nome e prioridade */
+        justify-content: space-between; /* Espaço entre nome e prioridade */
+        align-items: center; /* Alinha verticalmente */
+      }
+      .patient-item .name-time {
+        flex-grow: 1; /* Permite que o nome ocupe o espaço restante */
+      }
+      .patient-item .priority {
+        /* float: right; removido pois flexbox é usado */
+        font-weight: bold;
+        padding: 3px 8px;
+        border-radius: 10px;
+        font-size: 0.8em;
+        margin-left: 10px; /* Espaço entre nome e prioridade */
+        white-space: nowrap; /* Evita quebra de linha na tag de prioridade */
+      }
+
+      .priority-EMERGÊNCIA {
+        background-color: #dc3545;
+        color: white;
+      } /* Traduzido */
+      .priority-PCD {
+        background-color: #fd7e14;
+        color: white;
+      }
+      .priority-IDOSO {
+        background-color: #6f42c1;
+        color: white;
+      } /* Traduzido */
+      .priority-NORMAL {
+        background-color: #28a745;
+        color: white;
+      }
+      .priority-DESCONHECIDA {
+        background-color: #6c757d;
+        color: white;
+      }
+
+      .empty-queue {
+        color: #6c757d;
+        font-style: italic;
+        text-align: center;
+        padding: 10px;
+      }
+
+      .actions-area {
+        margin-top: 30px;
+        padding-top: 20px;
+        border-top: 1px solid #eee;
+        display: flex;
+        flex-wrap: wrap; /* Permite quebra de linha em telas menores */
+        gap: 15px; /* Espaço entre os elementos */
+        align-items: flex-end;
+      }
+      .actions-area .form-group {
+        flex: 1 1 200px; /* Permite crescer e encolher, base de 200px */
+        margin-bottom: 0;
+      }
+      .actions-area button {
+        width: auto;
+        flex-shrink: 0;
+        padding: 12px 20px;
+        margin-top: 0; /* Remove margem do botão se estiver alinhado */
+      }
+      /* Ajuste para o botão de atualizar ficar um pouco separado */
+      #refreshQueuesButton {
+        background-color: #6c757d;
+      }
+      #refreshQueuesButton:hover {
+        background-color: #5a6268;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <img src="images/ODONTO.jpg" alt="Logotipo OdontoLine" class="logo" />
+        <h1 class="main-title">OdontoLine</h1>
+        <p>Sistema de Gerenciamento de Fila Odontológica</p>
+      </div>
+
+      <section id="add-patient-section">
+        <h1>Cadastro de Paciente</h1>
+        <form id="cadastroForm">
+          <div class="form-group">
+            <label for="nome">Nome completo:</label>
+            <input type="text" id="nome" name="nome" required />
+          </div>
+
+          <div class="form-group">
+            <label for="especialidade">Especialidade:</label>
+            <select id="especialidade" name="especialidade" required>
+              <option value="">Selecione...</option>
+              <option value="orthodontics">Ortodontia</option>
+              <option value="cleaning">Limpeza</option>
+              <option value="extraction">Extração</option>
+              <option value="general">Clínico Geral</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="prioridade">Prioridade:</label>
+            <select id="prioridade" name="prioridade" required>
+              <option value="">Selecione...</option>
+              <option value="1">Emergência</option>
+              <option value="2">PCD</option>
+              <option value="3">Idoso</option>
+              <option value="4">Normal</option>
+            </select>
+          </div>
+          <button type="submit">Entrar na Fila</button>
+        </form>
+        <div id="statusCadastro" class="status-message"></div>
+      </section>
+
+      <section class="actions-area">
+        <h2>Ações da Fila</h2>
+        <div class="form-group">
+          <label for="actionSpecialty">Selecionar Especialidade:</label>
+          <select id="actionSpecialty" name="actionSpecialty"></select>
+        </div>
+        <button id="callNextButton">Chamar Próximo</button>
+        <button id="refreshQueuesButton">Atualizar Filas</button>
+      </section>
+      <div id="statusAcoes" class="status-message"></div>
+
+      <section id="queue-display-container">
+        <h2>Filas de Atendimento</h2>
+        <div id="queue-display-area" class="queue-display-area">
+          <p class="empty-queue">
+            Clique em "Atualizar Filas" para ver os pacientes.
+          </p>
+        </div>
+      </section>
+    </div>
+
+    <script>
+      const cadastroForm = document.getElementById("cadastroForm");
+      const statusCadastroDiv = document.getElementById("statusCadastro");
+      const statusAcoesDiv = document.getElementById("statusAcoes");
+
+      const callNextButton = document.getElementById("callNextButton");
+      const actionSpecialtySelect = document.getElementById("actionSpecialty");
+      const queueDisplayArea = document.getElementById("queue-display-area");
+      const refreshQueuesButton = document.getElementById(
+        "refreshQueuesButton"
+      );
+      const specialtySelectCadastro = document.getElementById("especialidade");
+
+      const API_BASE_URL = "http://127.0.0.1:5001/api";
+
+      // Mapa para traduzir chaves de especialidade para nomes em PT-BR
+      const specialtyNameMap = {
+        orthodontics: "Ortodontia",
+        cleaning: "Limpeza",
+        extraction: "Extração",
+        general: "Clínico Geral",
+        // Adicione mais se o backend retornar outras chaves
+      };
+
+      function populateSpecialtySelects(specialties) {
+        // Limpa selects existentes (exceto a opção "Selecione...")
+        actionSpecialtySelect.innerHTML =
+          '<option value="">Todas (para visualizar)</option>';
+        // O select de cadastro já tem as opções estáticas, mas poderia ser populado também
+        // specialtySelectCadastro.innerHTML = '<option value="">Selecione...</option>';
+
+        specialties.forEach(specKey => {
+          const optionDisplay = specialtyNameMap[specKey] || specKey; // Usa tradução ou a chave
+
+          const actionOption = document.createElement("option");
+          actionOption.value = specKey;
+          actionOption.textContent = optionDisplay;
+          actionSpecialtySelect.appendChild(actionOption.cloneNode(true)); // Clona para o select de ação
+
+          // Se quiser popular o select de cadastro dinamicamente:
+          // const cadastroOption = document.createElement('option');
+          // cadastroOption.value = specKey;
+          // cadastroOption.textContent = optionDisplay;
+          // specialtySelectCadastro.appendChild(cadastroOption);
+        });
+      }
+
+      function showStatusMessage(
+        element,
+        message,
+        type = "info",
+        duration = 5000
+      ) {
+        element.className = `status-message show ${type}`;
+        element.innerHTML = message;
+        if (duration > 0) {
+          setTimeout(() => {
+            element.innerHTML = "";
+            element.className = "status-message";
+          }, duration);
+        }
+      }
+
+      cadastroForm.addEventListener("submit", async function (event) {
+        event.preventDefault();
+        const nome = document.getElementById("nome").value.trim();
+        const especialidade = document.getElementById("especialidade").value;
+        const prioridade = document.getElementById("prioridade").value;
+
+        statusCadastroDiv.className = "status-message"; // Reset
+        statusCadastroDiv.innerHTML = "";
+
+        if (!nome || !especialidade || !prioridade) {
+          showStatusMessage(
+            statusCadastroDiv,
+            "Erro: Todos os campos são obrigatórios.",
+            "error"
+          );
+          return;
+        }
+
+        const backendApiUrl = `${API_BASE_URL}/adicionar_paciente`;
+        try {
+          const response = await fetch(backendApiUrl, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              nome,
+              specialty: especialidade,
+              priority: prioridade,
+            }),
+          });
+          const result = await response.json();
+          if (response.ok && result.message) {
+            showStatusMessage(statusCadastroDiv, result.message, "success");
+            cadastroForm.reset();
+            fetchQueues();
+          } else {
+            throw new Error(
+              result.error || result.message || `Erro HTTP ${response.status}`
+            );
+          }
+        } catch (error) {
+          showStatusMessage(
+            statusCadastroDiv,
+            `Erro ao cadastrar: ${error.message}`,
+            "error"
+          );
+          console.error("Detalhes do erro de cadastro:", error);
+        }
+      });
+
+      async function fetchQueues() {
+        const backendApiUrl = `${API_BASE_URL}/filas`;
+        console.log(`Buscando filas de: ${backendApiUrl}`);
+        showStatusMessage(statusAcoesDiv, "Atualizando filas...", "info", 2000);
+        try {
+          const response = await fetch(backendApiUrl);
+          if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(
+              `Erro HTTP ${response.status} ao buscar filas: ${errorText}`
+            );
+          }
+          const queuesData = await response.json();
+          renderQueues(queuesData);
+          // Popula o select de especialidades para ação com base nas chaves recebidas
+          // Isso é útil se as especialidades puderem mudar ou vierem do backend
+          const specialtiesFromServer = Object.keys(queuesData);
+          populateSpecialtySelects(
+            specialtiesFromServer.length > 0
+              ? specialtiesFromServer
+              : ["orthodontics", "cleaning", "extraction", "general"]
+          );
+        } catch (error) {
+          console.error("Erro ao buscar filas:", error);
+          queueDisplayArea.innerHTML = `<p class="error">Erro ao carregar filas: ${error.message}</p>`;
+          showStatusMessage(
+            statusAcoesDiv,
+            `Erro ao carregar filas: ${error.message}`,
+            "error"
+          );
+        }
+      }
+
+      function renderQueues(queuesData) {
+        queueDisplayArea.innerHTML = "";
+
+        if (
+          Object.keys(queuesData).length === 0 ||
+          !Object.values(queuesData).some(q => q.length > 0)
+        ) {
+          queueDisplayArea.innerHTML =
+            "<p class='empty-queue'>Nenhuma fila para exibir ou todas as filas estão vazias.</p>";
+          return;
+        }
+
+        for (const specialtyKey in queuesData) {
+          const sectionDiv = document.createElement("div");
+          sectionDiv.className = "queue-section";
+
+          const title = document.createElement("h3");
+          // Usa o mapa de tradução para o título da seção
+          title.textContent =
+            specialtyNameMap[specialtyKey] ||
+            specialtyKey.charAt(0).toUpperCase() + specialtyKey.slice(1);
+          sectionDiv.appendChild(title);
+
+          if (queuesData[specialtyKey] && queuesData[specialtyKey].length > 0) {
+            queuesData[specialtyKey].forEach(patient => {
+              const patientDiv = document.createElement("div");
+              patientDiv.className = "patient-item";
+
+              const nameTimeSpan = document.createElement("span");
+              nameTimeSpan.className = "name-time";
+              nameTimeSpan.innerHTML = `<strong>${patient.name}</strong> (Chegada: ${patient.arrival_time})`;
+
+              const prioritySpan = document.createElement("span");
+              // O backend já envia 'priority_name' traduzido (ex: "EMERGÊNCIA")
+              // Se não, você traduziria aqui: priorityNameMap[patient.priority_name_key] || patient.priority_name_key
+              prioritySpan.textContent = patient.priority_name;
+              // A classe CSS deve ser baseada na chave original ou numa versão normalizada da tradução
+              let priorityClass = (patient.priority_name || "DESCONHECIDA")
+                .toUpperCase()
+                .replace("Ç", "C")
+                .replace("Ã", "A")
+                .replace(" ", "_");
+              prioritySpan.className = `priority priority-${priorityClass}`;
+
+              patientDiv.appendChild(nameTimeSpan);
+              patientDiv.appendChild(prioritySpan);
+              sectionDiv.appendChild(patientDiv);
+            });
+          } else {
+            const emptyMessage = document.createElement("p");
+            emptyMessage.className = "empty-queue";
+            emptyMessage.textContent = "(Fila vazia)";
+            sectionDiv.appendChild(emptyMessage);
+          }
+          queueDisplayArea.appendChild(sectionDiv);
+        }
+      }
+
+      callNextButton.addEventListener("click", async function () {
+        const specialty = actionSpecialtySelect.value;
+        if (!specialty) {
+          showStatusMessage(
+            statusAcoesDiv,
+            "Por favor, selecione uma especialidade para chamar o próximo.",
+            "error"
+          );
+          return;
+        }
+
+        const backendApiUrl = `${API_BASE_URL}/chamar_proximo`;
+        console.log(`Chamando próximo para ${specialty} em ${backendApiUrl}`);
+
+        try {
+          const response = await fetch(backendApiUrl, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ specialty: specialty }),
+          });
+
+          const result = await response.json();
+
+          if (response.ok && result.patient) {
+            showStatusMessage(
+              statusAcoesDiv,
+              `Chamado: ${result.patient.name} (Prioridade: ${
+                result.patient.priority_name
+              }) para ${specialtyNameMap[specialty] || specialty}.`,
+              "success"
+            );
+            fetchQueues();
+          } else if (response.ok && result.message) {
+            showStatusMessage(statusAcoesDiv, result.message, "info");
+          } else {
+            throw new Error(
+              result.error || result.message || `Erro HTTP ${response.status}`
+            );
+          }
+        } catch (error) {
+          showStatusMessage(
+            statusAcoesDiv,
+            `Erro ao chamar próximo: ${error.message}`,
+            "error"
+          );
+          console.error("Detalhes do erro ao chamar próximo:", error);
+        }
+      });
+
+      refreshQueuesButton.addEventListener("click", fetchQueues);
+      document.addEventListener("DOMContentLoaded", fetchQueues);
+    </script>
+  </body>
+</html>
